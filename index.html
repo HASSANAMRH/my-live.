@@ -13,17 +13,12 @@
         .heart::before { top: -80px; left: 0; }
         .heart::after { top: 0; left: 80px; }
         #timer { position: absolute; top: 25px; left: 0; width: 100%; transform: rotate(45deg); color: white; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); z-index: 1; line-height: 1.3; }
-        .heart-text { margin-top: 30px; font-size: 1.4rem; font-weight: bold; color: white; animation: pulseText 2s infinite; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-        @keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .card { background: rgba(255, 255, 255, 0.9); padding: 25px; margin: 15px auto; max-width: 400px; border-radius: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
         input, textarea { width: 85%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 12px; background: #fdf2f5; }
         button { background: #e91e63; color: white; border: none; padding: 14px; width: 90%; border-radius: 12px; cursor: pointer; font-weight: bold; }
-        img { width: 100%; border-radius: 15px; margin-top: 10px; }
     </style>
 </head>
 <body>
-
     <div id="login-screen">
         <h2 style="color: white;">أهلاً بكِ في عالمنا الخاص ❤️</h2>
         <input type="password" id="pass" placeholder="اكتبي الباسورد هنا..">
@@ -36,75 +31,56 @@
             <div class="heart"></div>
             <div id="timer"></div>
         </div>
-        <div class="heart-text">قاعد ع قلبك ي بت ❤️</div>
-        
         <div class="card">
             <input id="title" placeholder="بخصوص اي الكلام الحلو ده">
             <textarea id="content" placeholder="اكتبي اللي عجبك..."></textarea>
-            <input type="file" id="imageInput" accept="image/*">
             <button onclick="window.saveMemory()">حفظ الكلام ي قمرى</button>
         </div>
         <div id="memoriesList"></div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyA8f_AsUinvordYHDZuNUQ6rn1i_Ip4Ap0",
             authDomain: "ninoabou3li.firebaseapp.com",
             projectId: "ninoabou3li",
-            storageBucket: "ninoabou3li.firebasestorage.app",
+            storageBucket: "ninoabou3li.appspot.com",
             messagingSenderId: "348281108098",
-            appId: "1:348281108098:web:2aa7e9f6faeadea3cd269b",
-            measurementId: "G-DK21GD1LE6"
+            appId: "1:348281108098:web:2aa7e9f6faeadea3cd269b"
         };
         
         const db = getFirestore(initializeApp(firebaseConfig));
 
         window.checkPass = () => {
             if(document.getElementById('pass').value == "6122006") {
-                document.getElementById('hearts-anim').innerHTML = "❤️❤️❤️❤️❤️";
-                setTimeout(() => {
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
-                }, 800);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                loadMemories();
             } else { alert("الباسورد غلط يا روحي!"); }
         };
 
-        const startDate = new Date(); startDate.setDate(startDate.getDate() - 501); 
-        setInterval(() => {
-            const diff = new Date() - startDate;
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            document.getElementById('timer').innerHTML = `<span style="font-size: 1.3rem;">${days} يوم</span><br><span style="font-size: 0.9rem;">${hours} : ${minutes} : ${seconds}</span>`;
-        }, 1000);
-
         window.saveMemory = async () => {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            if(!title || !content) return alert("اكتبي حاجة الأول!");
             try {
-                const title = document.getElementById('title').value;
-                const content = document.getElementById('content').value;
-                const file = document.getElementById('imageInput').files[0];
-                let imageUrl = "";
-                if (file) {
-                    imageUrl = await new Promise(r => { 
-                        const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => r(reader.result); 
-                    });
-                }
-                await addDoc(collection(db, "memories"), { title, content, imageUrl, date: new Date() });
+                await addDoc(collection(db, "memories"), { title, content, date: new Date() });
                 alert("تم الحفظ يا قمر!");
                 location.reload();
-            } catch(e) { alert("خطأ في الحفظ: " + e.message); }
+            } catch(e) { alert("خطأ: " + e.message); }
         };
 
-        const snapshot = await getDocs(query(collection(db, "memories"), orderBy("date", "desc")));
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            document.getElementById('memoriesList').innerHTML += `<div class="card"><h3>${d.title}</h3><p>${d.content}</p>${d.imageUrl ? `<img src="${d.imageUrl}">` : ""}</div>`;
-        });
+        async function loadMemories() {
+            const list = document.getElementById('memoriesList');
+            const snapshot = await getDocs(query(collection(db, "memories"), orderBy("date", "desc")));
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                list.innerHTML += `<div class="card"><h3>${d.title}</h3><p>${d.content}</p></div>`;
+            });
+        }
     </script>
 </body>
 </html>
